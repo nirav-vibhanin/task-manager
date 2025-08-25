@@ -19,6 +19,8 @@ export default function KanbanBoard() {
   const [dragOver, setDragOver] = useState<Task['status'] | null>(null);
   const tasks = localTasks ?? tasksData?.items ?? [];
   const [openCreateTask, setOpenCreateTask] = useState(false);
+  const [openEditTask, setOpenEditTask] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const columns = useMemo(() => {
     const map: Record<string, Task[]> = { 'Pending': [], 'In Progress': [], 'Completed': [] };
@@ -41,7 +43,7 @@ export default function KanbanBoard() {
     setLocalTasks(next);
 
     try {
-      await updateTask({ id: taskId, body: { status, project: projectId } as any }).unwrap();
+      await updateTask({ id: taskId, body: { status } as any }).unwrap();
       toast.success('Status updated');
       // Refetch to sync
       refetch();
@@ -99,7 +101,14 @@ export default function KanbanBoard() {
                   <div className="task-meta">
                     <span className="chip">Due: {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '-'}</span>
                     <div className="flex gap-3">
-                      <Link to={`/tasks/${t._id}/edit`} state={{ task: t, projectId }} className="text-amber-600 text-xs">Edit</Link>
+                      {t.status !== 'Completed' && (
+                        <button
+                          className="text-amber-600 text-xs"
+                          onClick={() => { setSelectedTask(t); setOpenEditTask(true); }}
+                        >
+                          Edit
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -114,6 +123,18 @@ export default function KanbanBoard() {
 
       <Modal open={openCreateTask} title="Create Task" onClose={() => setOpenCreateTask(false)} size="lg">
         <TaskForm inModal projectIdOverride={projectId} onClose={() => setOpenCreateTask(false)} onSaved={() => { setOpenCreateTask(false); refetch(); }} />
+      </Modal>
+
+      <Modal open={openEditTask} title="Edit Task" onClose={() => { setOpenEditTask(false); setSelectedTask(null); }} size="lg">
+        {selectedTask && (
+          <TaskForm
+            inModal
+            projectIdOverride={projectId}
+            taskOverride={selectedTask}
+            onClose={() => { setOpenEditTask(false); setSelectedTask(null); }}
+            onSaved={() => { setOpenEditTask(false); setSelectedTask(null); refetch(); }}
+          />
+        )}
       </Modal>
     </div>
   );

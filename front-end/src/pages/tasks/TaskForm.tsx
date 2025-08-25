@@ -37,8 +37,9 @@ export default function TaskForm({ inModal, projectIdOverride, taskOverride, onC
   const { projectId, id } = useParams();
   const navigate = useNavigate();
   const location = useLocation() as any;
-  // Determine edit mode: either editing via route (/tasks/:id/edit) or via modal with override
   const isEditRoute = typeof location?.pathname === 'string' && location.pathname.includes('/tasks/');
+  const stateTaskId = (location?.state as any)?.task?._id as string | undefined;
+  const overrideTaskId = (taskOverride as any)?._id as string | undefined;
   const task = taskOverride ?? location.state?.task;
   const isEdit = (Boolean(id) && isEditRoute) || Boolean(taskOverride);
   const { data: fetchedTaskData, isLoading: loadingTask } = useGetTaskByIdQuery(id!, { skip: !isEdit || !!task || !!taskOverride });
@@ -81,7 +82,9 @@ export default function TaskForm({ inModal, projectIdOverride, taskOverride, onC
           onSubmit={async (values) => {
             try {
               if (isEdit) {
-                await updateTask({ id: id!, body: { ...(values as any), project: _projectId } }).unwrap();
+                const targetId = (isEditRoute && id ? id : undefined) || overrideTaskId || stateTaskId || selectedTask?._id;
+                if (!targetId) throw new Error('Task id is missing');
+                await updateTask({ id: targetId, body: { ...values } }).unwrap();
                 toast.success('Task updated');
               } else {
                 await createTask({ ...(values as any), project: _projectId }).unwrap();
@@ -136,7 +139,9 @@ export default function TaskForm({ inModal, projectIdOverride, taskOverride, onC
               onSubmit={async (values) => {
                 try {
                   if (isEdit) {
-                    await updateTask({ id: id!, body: { ...(values as any), project: _projectId } }).unwrap();
+                    const targetId = (isEditRoute && id ? id : undefined) || overrideTaskId || stateTaskId || selectedTask?._id;
+                    if (!targetId) throw new Error('Task id is missing');
+                    await updateTask({ id: targetId, body: { ...(values as any) } }).unwrap();
                     toast.success('Task updated');
                   } else {
                     await createTask({ ...(values as any), project: _projectId }).unwrap();

@@ -81,7 +81,9 @@ export default function ProjectDetails() {
                 <td className="p-2">{t.status}</td>
                 <td className="p-2">{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '-'}</td>
                 <td className="p-2 space-x-2">
-                  <button onClick={() => { setSelectedTask(t); setOpenEditTask(true); }} className="text-amber-600">Edit</button>
+                  {t.status !== 'Completed' && (
+                    <button onClick={() => { setSelectedTask(t); setOpenEditTask(true); }} className="text-amber-600">Edit</button>
+                  )}
                   <button onClick={() => onDeleteTask(t._id)} className="text-red-600">Delete</button>
                 </td>
               </tr>
